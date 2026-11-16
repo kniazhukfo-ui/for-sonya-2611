@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Для тебя</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💌</text></svg>">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400;1,500&family=Jost:wght@300;400&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --night:#1b0f1f; --wine:#3b1733; --rose:#e9a3ab; --peach:#f7d5bd; --ink:#fbeee6;
+    --serif:"Cormorant Garamond",Georgia,"Times New Roman",serif;
+    --sans:"Jost","Helvetica Neue",Arial,sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+  html,body{height:100%;overflow:hidden;background:var(--night);color:var(--ink);font-family:var(--serif);touch-action:manipulation}
+  button{font:inherit;color:inherit;cursor:pointer;background:none;border:0}
+
+  .glow{position:fixed;inset:0;background:
+    radial-gradient(60vmax 60vmax at 15% 10%,rgba(233,163,171,.22),transparent 60%),
+    radial-gradient(55vmax 55vmax at 90% 85%,rgba(247,213,189,.16),transparent 60%),
+    linear-gradient(180deg,var(--night),var(--wine) 120%);
+    animation:drift 24s ease-in-out infinite alternate}
+  @keyframes drift{to{filter:hue-rotate(-14deg) brightness(1.1)}}
+
+  /* вход */
+  #gate{position:fixed;inset:0;z-index:30;display:grid;place-items:center;text-align:center;padding:24px;
+    background:var(--night);transition:opacity 1.2s ease,visibility 1.2s}
+  #gate.gone{opacity:0;visibility:hidden}
+  #gate h1{font-weight:400;font-style:italic;font-size:clamp(2.4rem,11vw,5rem);line-height:1.1;margin-bottom:.4em}
+  #gate p{font-family:var(--sans);font-weight:300;color:var(--peach);opacity:.85;margin-bottom:2.2rem}
+  #start{font-family:var(--sans);padding:.95em 2.2em;border-radius:999px;border:1px solid var(--rose);
+    background:rgba(233,163,171,.12);font-size:1rem}
+
+  /* сцена */
+  #stage{position:fixed;inset:0;padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bottom)}
+  .slide{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    gap:clamp(18px,4vh,36px);padding:56px 24px 48px;opacity:0;visibility:hidden;
+    transition:opacity 1.2s ease,visibility 1.2s}
+  .slide.on{opacity:1;visibility:visible}
+  .photo{width:min(76vw,38vh*0.75*2,380px);aspect-ratio:3/4;max-height:56vh;border-radius:999px 999px 18px 18px;overflow:hidden;
+    background:linear-gradient(160deg,var(--wine),#5a2447);box-shadow:0 30px 80px rgba(0,0,0,.45);
+    transform:scale(.93);filter:blur(14px);transition:transform 6s ease-out,filter 1.6s ease}
+  .slide.on .photo{transform:scale(1);filter:none}
+  .photo img{width:100%;height:100%;object-fit:cover;display:block}
+  .photo .empty{height:100%;display:grid;place-items:center;text-align:center;padding:24px;
+    font-family:var(--sans);font-weight:300;font-size:.9rem;color:var(--peach)}
+  .text{max-width:24ch;text-align:center;font-size:clamp(1.45rem,6vw,2.1rem);line-height:1.3;font-style:italic;
+    opacity:0;transform:translateY(10px);transition:opacity 1.2s ease .5s,transform 1.2s ease .5s}
+  .slide.on .text{opacity:1;transform:none}
+  .text b{font-weight:600;font-style:normal;color:var(--rose)}
+
+  .final .text{font-size:clamp(1.7rem,7vw,2.6rem);max-width:20ch}
+  #yes{font-family:var(--sans);padding:.9em 2.4em;border-radius:999px;background:var(--rose);color:var(--night);font-size:1rem}
+  #answer{font-size:1.4rem;font-style:italic;color:var(--peach);min-height:1.6em;text-align:center}
+  .heart{position:fixed;bottom:-30px;font-size:24px;pointer-events:none;animation:up 4s linear forwards;z-index:15}
+  @keyframes up{to{transform:translateY(-110vh) rotate(25deg);opacity:0}}
+
+  /* индикатор сверху */
+  #bars{position:fixed;z-index:10;left:16px;right:16px;top:max(14px,env(safe-area-inset-top));display:flex;gap:5px}
+  #bars i{flex:1;height:3px;border-radius:3px;background:rgba(251,238,230,.25);overflow:hidden;position:relative}
+  #bars i::after{content:"";position:absolute;inset:0;background:var(--peach);transform:scaleX(0);transform-origin:left}
+  #bars i.done::after{transform:scaleX(1)}
+  #bars i.cur::after{transform:scaleX(1);transition:transform var(--dur,6s) linear}
+  #bars i.cur.start::after{transform:scaleX(0);transition:none}
+
+  /* зоны тапа */
+  .tap{position:fixed;top:60px;bottom:90px;z-index:5;width:35%}
+  #prev{left:0}#next{right:0;width:65%}
+  body.end #next{display:none}
+  body.end #prev{width:15%}
+
+  #mute{position:fixed;z-index:12;right:max(16px,env(safe-area-inset-right));bottom:max(16px,env(safe-area-inset-bottom));
+    width:46px;height:46px;border-radius:50%;border:1px solid rgba(251,238,230,.35);background:rgba(27,15,31,.6);
+    backdrop-filter:blur(8px);font-size:1.15rem;opacity:0;transition:opacity 1s}
+  #mute.show{opacity:1}
+  :focus-visible{outline:2px solid var(--peach);outline-offset:3px}
+  @media (prefers-reduced-motion:reduce){.glow{animation:none}.photo,.text,.slide{transition-duration:.01s;transition-delay:0s}}
+</style>
+</head>
+<body>
+<div class="glow"></div>
+
+<section id="gate">
+  <div>
+    <h1>Это тебе, Соня</h1>
+    <p>Включи звук. Листай тапом по экрану</p>
+    <button id="start">Открыть</button>
+  </div>
+</section>
+
+<div id="bars"></div>
+<main id="stage"></main>
+<button class="tap" id="prev" aria-label="Назад"></button>
+<button class="tap" id="next" aria-label="Дальше"></button>
+<button id="mute" aria-label="Выключить звук">🔊</button>
+<audio id="music" src="music.mp3" loop preload="auto"></audio>
+
+<script>
+/* ====== ЗДЕСЬ МЕНЯЕШЬ ВСЁ СВОЁ ======
+   Фото берутся автоматически из папки FOLDER.
+   Называй их по номерам: 1.jpg, 2.jpg, 3.jpg ... (без пропусков).
+   Расширения jpg, jpeg, png, webp работают, можно смешивать. */
+const FOLDER = "photos";   // имя папки с фотками (рядом с index.html)
+const SECONDS = 6;         // сколько секунд показывается один слайд
+
+// Подписи по порядку: 1-я к 1-му фото и так далее.
+// Если фото больше, чем подписей, остальные берут подписи из запасного списка.
+const TEXTS = [
+  "Мы познакомились совсем недавно, а у меня уже есть любимый взгляд. Вот этот: чуть смущённый и очень тёплый.",
+  "Глаза цвета тёплого мёда. В них хочется смотреть и никуда не торопиться.",
+  "Прячешься за ладонью, а глаза всё равно улыбаются. Это очень <b>мило</b>.",
+  "Осень тебе идёт. Вокруг столько красок, а смотреть хочется только на тебя.",
+  "Сердечко на футболке как намёк: ты добрая, настоящая, и с тобой <b>легко</b>.",
+  "Мы очень схожи вайбами. Кажется, мы понимаем друг друга без лишних слов.",
+];
+const FALLBACK = [
+  "Ты умеешь заряжать позитивом.",
+  "Рядом с тобой хочется улыбаться.",
+  "Вот такая ты — настоящая.",
+  "Люблю такие моменты.",
+];
+const FINAL_TEXT = "Мне кажется, это только начало. Погуляем на выходных?";
+const FINAL_BUTTON = "Да 💛";
+const FINAL_ANSWER = "Отлично. Тогда я напишу тебе ✨";
+/* ==================================== */
+
+const EXTS = ["jpg","jpeg","png","webp","JPG","JPEG","PNG","WEBP"], MAX = 80;
+const stage = document.getElementById("stage"), bars = document.getElementById("bars");
+let slides = [], dots = [], idx = -1, timer = null;
+
+function tryLoad(url) {
+  return new Promise(r => { const i = new Image(); i.onload = () => r(true); i.onerror = () => r(false); i.src = url; });
+}
+async function findPhotos() {
+  const found = []; let ext = null;
+  for (let n = 1; n <= MAX; n++) {
+    const order = ext ? [ext, ...EXTS.filter(e => e !== ext)] : EXTS;
+    let hit = null;
+    for (const e of order) {
+      const u = `${FOLDER}/${n}.${e}`, u2 = `${FOLDER}/${n}.${e}.${e}`;
+      if (await tryLoad(u)) { hit = u; ext = e; break; }
+      if (await tryLoad(u2)) { hit = u2; ext = e; break; }
+    }
+    if (!hit) break;
+    found.push(hit);
+  }
+  return found;
+}
+function build(photos) {
+  if (!photos.length) photos = [null];
+  photos.forEach((src, i) => {
+    const el = document.createElement("section");
+    el.className = "slide";
+    const text = TEXTS[i] ?? FALLBACK[(i - TEXTS.length) % FALLBACK.length];
+    el.innerHTML = `<div class="photo">${src ? `<img alt="" src="${src}">` :
+      `<div class="empty">Фото не найдены.<br>Положи их в папку «${FOLDER}» и назови 1.jpg, 2.jpg…</div>`}</div><p class="text">${text}</p>`;
+    stage.appendChild(el); slides.push(el);
+  });
+  const fin = document.createElement("section");
+  fin.className = "slide final";
+  fin.innerHTML = `<p class="text">${FINAL_TEXT}</p><button id="yes">${FINAL_BUTTON}</button><p id="answer"></p>`;
+  stage.appendChild(fin); slides.push(fin);
+  slides.forEach(() => bars.appendChild(document.createElement("i")));
+  dots = [...bars.children];
+  dots.forEach(d => d.style.setProperty("--dur", SECONDS + "s"));
+  document.getElementById("yes").onclick = () => {
+    document.getElementById("answer").textContent = FINAL_ANSWER;
+    for (let i = 0; i < 22; i++) {
+      const h = document.createElement("span");
+      h.className = "heart"; h.textContent = ["💛","🤍","💗"][i % 3];
+      h.style.left = Math.random() * 100 + "vw"; h.style.animationDelay = Math.random() * 1.2 + "s";
+      document.body.appendChild(h); setTimeout(() => h.remove(), 5500);
+    }
+  };
+}
+function show(n) {
+  n = Math.max(0, Math.min(slides.length - 1, n));
+  clearTimeout(timer);
+  idx = n;
+  document.body.classList.toggle("end", n === slides.length - 1);
+  slides.forEach((s, i) => s.classList.toggle("on", i === n));
+  dots.forEach((d, i) => { d.className = i < n ? "done" : ""; });
+  const cur = dots[n];
+  if (n < slides.length - 1) {
+    cur.className = "cur start";
+    void cur.offsetWidth;
+    cur.className = "cur";
+    timer = setTimeout(() => show(n + 1), SECONDS * 1000);
+  } else {
+    cur.className = "done";
+  }
+}
+
+const ready = findPhotos().then(build);
+const audio = document.getElementById("music"), mute = document.getElementById("mute");
+document.getElementById("start").onclick = async () => {
+  audio.volume = .7; audio.play().catch(() => {});
+  document.getElementById("gate").classList.add("gone");
+  mute.classList.add("show");
+  await ready;
+  show(0);
+};
+document.getElementById("next").onclick = () => idx >= 0 && show(idx + 1);
+document.getElementById("prev").onclick = () => idx >= 0 && show(idx - 1);
+
+let x0 = null;
+addEventListener("touchstart", e => { x0 = e.touches[0].clientX; }, { passive: true });
+addEventListener("touchend", e => {
+  if (x0 === null || idx < 0) return;
+  const dx = e.changedTouches[0].clientX - x0;
+  if (Math.abs(dx) > 50) show(idx + (dx < 0 ? 1 : -1));
+  x0 = null;
+}, { passive: true });
+addEventListener("keydown", e => {
+  if (e.key === "ArrowRight") show(idx + 1);
+  if (e.key === "ArrowLeft") show(idx - 1);
+});
+mute.onclick = () => {
+  if (audio.paused) { audio.play(); mute.textContent = "🔊"; mute.setAttribute("aria-label","Выключить звук"); }
+  else { audio.pause(); mute.textContent = "🔈"; mute.setAttribute("aria-label","Включить звук"); }
+};
+</script>
+</body>
+</html>
